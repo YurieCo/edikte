@@ -3,8 +3,7 @@ from robobrowser import RoboBrowser
 from bs4 import BeautifulSoup
 import os
 import requests
-import cssutils
-import base64
+import csv
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -30,7 +29,6 @@ if not os.path.exists('menuImg'):
     os.mkdir('menuImg')
 
 
-
 def info_item(item_url):
     item_content = session.get(item_url)
     item_content.raise_for_status()
@@ -40,7 +38,7 @@ def info_item(item_url):
     if header_img:
         filename = header_img.split('/')[-1].split('?')[0]
     else:
-        header_img = local_soup.find('div', class_='lazy-res-photo res-photo-thumbnail')['data-original']
+        header_img = local_soup.find('div', class_='lazy-res-photo res-photo-thumbnail')['data-original'].split('?')[0]
         filename = header_img.split('/')[-1].split('?')[0]
 
     with open('headerImg/{}'.format(filename), 'wb') as f:
@@ -57,23 +55,52 @@ def info_item(item_url):
     cuisine = local_soup.select_one('div.res-info-cuisines.clearfix').text.strip()
 
     votes, phone, avg_costs = local_soup.find_all('span',{'tabindex':0, 'aria-label':True})[:3]
-    open_hours = local_soup.select_one('div.res-info-detail div.res-info-timings div.clearfix div.medium').text.strip()
-    address = local_soup.select_one('div.borderless.res-main-address div.resinfo-icon span').text.strip()
 
-    return {
-        "Name":title,
-        "Location":loc,
-        "Type":loc_type,
-        "HeaderImg":filename if filename else "",
-        "Rating":rating,
-        "Reviews":votes,
-        "Phone":phone,
-        "Cuisine":cuisine,
-        "AvgCost":avg_costs,
-        "OpeningHours":open_hours,
-        "Address":address,
-        "MenuImgs":'1234'
-    }
+
+    open_hours = [' '.join(a.strings) for a in local_soup.select_one('#res-week-timetable').find_all('tr')]
+    open_hours = ','.join(open_hours)
+    address = local_soup.select_one('div.borderless.res-main-address div.resinfo-icon span').text.strip()
+    menue_images = []
+
+
+
+    # save into file
+    with open('zomato-v5b-test.csv', 'a') as myfile:
+
+        myfile.write("{}, {}, {}, {}, {}, {}, {}, {},".format(title, loc, loc_type, header_img,
+                                                              filename, rating, votes, phone, cuisine,
+                                                              avg_costs
+                                                              ))
+
+        myfile.write('"{}", {},{}'.format(open_hours, address, item_url))
+
+        for img in local_soup.find_all('img',{'class':'lazy-menu-load'}):
+            image_url = img['data-original'].split('?')[0]
+            filename = image_url.split('/')[-1]
+            logging.info('saved with {}'.format(filename))
+            myfile.write(',{}'.format(filename))
+            content = session.get(image_url).content
+            with open('menuImg/{}'.format(filename),'wb') as f:
+                f.write(content)
+
+
+        myfile.write('\n')
+
+
+    # return {
+    #     "Name":title,
+    #     "Location":loc,
+    #     "Type":loc_type,
+    #     "HeaderImg":filename if filename else "",
+    #     "Rating":rating,
+    #     "Reviews":votes,
+    #     "Phone":phone,
+    #     "Cuisine":cuisine,
+    #     "AvgCost":avg_costs,
+    #     "OpeningHours":open_hours,
+    #     "Address":address,
+    #     "MenuImgs":menue_images
+    # }
 
 
 
@@ -83,12 +110,14 @@ def info_item(item_url):
 page_content = br.parsed
 
 
-# for item in page_content.select(' div.row div.col-s-12 a.result-title.hover_feedback.zred.bold.ln24.fontsize0'):
-#     item_url = item.get('href')
-#     logging.debug('Now processing {} '.format(item_url))
-#     info_item(item_url)
-#
-#     print(item)
+for item in page_content.select(' div.row div.col-s-12 a.result-title.hover_feedback.zred.bold.ln24.fontsize0'):
+    item_url = item.get('href')
+    logging.debug('Now processing {} '.format(item_url))
+    info_item(item_url)
+
+    print(item)
 
 
-info_item('https://www.zomato.com/melbourne/coriander-thai-kitchen-ashburton')
+
+
+
