@@ -1,2 +1,5 @@
-lxml==3.4.4
-requests-html
+robobrowser==0.5.3
+beautifulsoup4==4.6.0
+lxml==4.1.0
+requests==2.18.4
+cssutils
