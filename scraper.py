@@ -3,7 +3,6 @@ from robobrowser import RoboBrowser
 from bs4 import BeautifulSoup
 import os
 import requests
-import csv
 import scraperwiki
 
 logging.basicConfig(level=logging.DEBUG)
@@ -121,6 +120,7 @@ while True:
     url = "https://www.zomato.com/melbourne/dinner-in-ashburton?page={}".format(i)
 
     br.open(url)
+    br.response.raise_for_status()
     page_content = br.parsed
     has_page = page_content.find('a', class_='paginator_item next item')
     if not has_page:
