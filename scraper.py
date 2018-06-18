@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import os
 import requests
 import csv
+import scraperwiki
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -56,10 +57,22 @@ def info_item(item_url):
 
     cuisine = local_soup.select_one('div.res-info-cuisines.clearfix').text.strip()
 
-    votes, phone, avg_costs = local_soup.find_all('span',{'tabindex':0, 'aria-label':True})[:3]
-    votes, phone, avg_costs = votes.text.strip(), phone.text.strip(), avg_costs.text.strip()
+    metadata = local_soup.find_all('span',{'tabindex':0, 'aria-label':True})
+    doesnthave = ["doesnt have any","doesnt have any","doesnt have any"]
 
-    open_hours = [' '.join(a.strings) for a in local_soup.select_one('#res-week-timetable').find_all('tr')]
+    if len(metadata) == 1:
+        phone = metadata[0].text.strip()
+        votes = "doesn\'t have any"
+        avg_costs = "doesn\'t have any"
+    elif len(metadata) == 2:
+        phone, avg_costs = local_soup.find_all('span',{'tabindex':0, 'aria-label':True})[:2]
+        votes = ""
+    else:
+        votes, phone, avg_costs = local_soup.find_all('span',{'tabindex':0, 'aria-label':True})[:3] if metadata else doesnthave
+        votes, phone, avg_costs = votes.text.strip(), phone.text.strip(), avg_costs.text.strip()
+
+    var = local_soup.select_one('#res-week-timetable')
+    open_hours = [' '.join(a.strings) for a in var.find_all('tr')] if var else []
     open_hours = ','.join(open_hours)
     address = local_soup.select_one('div.borderless.res-main-address div.resinfo-icon span').text.strip()
 
@@ -84,15 +97,21 @@ def info_item(item_url):
              item_url, *l])
 
 
-i = 1
-while i < 9:
-    br.open("https://www.zomato.com/melbourne/dinner-in-ashburton?page={}".format(i))
+i = 0
+while True:
+    logging.info("now accessing data from page {}".format(i))
+    url = "https://www.zomato.com/melbourne/dinner-in-ashburton?page={}".format(i)
+
+    br.open(url)
     page_content = br.parsed
+    has_page = page_content.find('a', class_='paginator_item next item')
+    if not has_page:
+        break
     for item in page_content.select(' div.row div.col-s-12 a.result-title.hover_feedback.zred.bold.ln24.fontsize0'):
         item_url = item.get('href')
         logging.debug('Now processing {} '.format(item_url))
         info_item(item_url)
-    i+=1
+    i = i +1
 
 
 
