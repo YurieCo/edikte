@@ -45,10 +45,10 @@ def info_item(item_url):
         header_img = header_img['data-original'] if header_img else ""
         filename = header_img.split('/')[-1].split('?')[0] if header_img else ""
 
-    if filename:
-        with open('headerImg/{}'.format(filename), 'wb') as f:
-            content = session.get(header_img).content
-            f.write(content)
+    # if filename:
+    #     with open('headerImg/{}'.format(filename), 'wb') as f:
+    #         content = session.get(header_img).content
+    #         f.write(content)
 
 
     title = local_soup.select_one('a.ui.large.header.left').text.strip()
@@ -79,9 +79,6 @@ def info_item(item_url):
     address = local_soup.select_one('div.borderless.res-main-address div.resinfo-icon span').text.strip()
 
 
-    # with open('zomato-v5b-test.csv','a+') as myfile:
-    #     wr = csv.writer(myfile, delimiter=',',
-    #                         quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
     l = []
     data = {}
@@ -103,9 +100,9 @@ def info_item(item_url):
         filename = image_url.split('/')[-1]
         logging.info('saved with {}'.format(filename))
         l.append(filename)
-        content = session.get(image_url).content
-        with open('menuImg/{}'.format(filename),'wb') as f:
-            f.write(content)
+        # content = session.get(image_url).content
+        # with open('menuImg/{}'.format(filename),'wb') as f:
+        #     f.write(content)
 
     data['MenuImgs'] = '"'.join(l)
     scraperwiki.sqlite.save(unique_keys=['name','MenuImgs'], data=data)
@@ -130,9 +127,3 @@ while True:
         logging.debug('Now processing {} '.format(item_url))
         info_item(item_url)
     i = i +1
-
-
-
-
-
-
