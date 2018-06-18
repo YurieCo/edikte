@@ -30,6 +30,9 @@ if not os.path.exists('menuImg'):
     os.mkdir('menuImg')
 
 
+headers = ["Name",	"Location",	"Type", "HeaderImg","Rating","Reviews",	"Phone"	,"Cuisine", "AvgCost","OpeningHours",
+           "Address","URL","Dist","MenuImgs"]
+
 def info_item(item_url):
     item_content = session.get(item_url)
     item_content.raise_for_status()
@@ -77,24 +80,39 @@ def info_item(item_url):
     address = local_soup.select_one('div.borderless.res-main-address div.resinfo-icon span').text.strip()
 
 
-    with open('zomato-v5b-test.csv','a+') as myfile:
-        wr = csv.writer(myfile, delimiter=',',
-                            quotechar='"', quoting=csv.QUOTE_MINIMAL)
+    # with open('zomato-v5b-test.csv','a+') as myfile:
+    #     wr = csv.writer(myfile, delimiter=',',
+    #                         quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
-        l = []
-        for img in local_soup.find_all('img',{'class':'lazy-menu-load'}):
-            image_url = img['data-original'].split('?')[0]
-            filename = image_url.split('/')[-1]
-            logging.info('saved with {}'.format(filename))
-            # myfile.write(',{}'.format(filename))
-            # wr.writerow([filename])
-            l.append(filename)
-            content = session.get(image_url).content
-            with open('menuImg/{}'.format(filename),'wb') as f:
-                f.write(content)
+    l = []
+    data = {}
+    data['title'] = title
+    data['Location'] = loc
+    data['Type'] = loc_type
+    data['HeaderImg'] = header_img
+    data['Rating'] = rating
+    data['Reviews'] = votes
+    data['Phone'] = phone
+    data['Cuisine'] = cuisine
+    data['AvgCost'] = avg_costs
+    data['OpeningHours'] = open_hours
+    data['Address'] = address
+    data['URL'] = item_url
 
-        wr.writerow([title, loc, loc_type, header_img, filename, rating, votes, phone, cuisine, avg_costs, open_hours, address,
-             item_url, *l])
+    for img in local_soup.find_all('img',{'class':'lazy-menu-load'}):
+        image_url = img['data-original'].split('?')[0]
+        filename = image_url.split('/')[-1]
+        logging.info('saved with {}'.format(filename))
+        l.append(filename)
+        content = session.get(image_url).content
+        with open('menuImg/{}'.format(filename),'wb') as f:
+            f.write(content)
+
+    data['MenuImgs'] = '"'.join(l)
+    scraperwiki.sqlite.save(unique_keys=['name','MenuImgs'], data=data)
+
+        # wr.writerow([title, loc, loc_type, header_img, filename, rating, votes, phone, cuisine, avg_costs, open_hours, address,
+        #      item_url, *l])
 
 
 i = 0
