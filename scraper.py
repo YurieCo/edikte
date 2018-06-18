@@ -114,7 +114,7 @@ def info_item(item_url):
         #      item_url, *l])
 
 
-i = 0
+i = 1
 while True:
     logging.info("now accessing data from page {}".format(i))
     url = "https://www.zomato.com/melbourne/dinner-in-ashburton?page={}".format(i)
